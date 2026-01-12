@@ -1,0 +1,1 @@
+# Guinea Mobile - Technical test
