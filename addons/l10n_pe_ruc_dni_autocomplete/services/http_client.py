@@ -17,11 +17,19 @@ class HttpClient:
         self._timeout = int(timeout)
         self._last_call = 0.0
 
-    def request(self, method, url, *, headers=None, params=None):
+    def request(self, method, url, *, headers=None, params=None, json=None, data=None):
         for attempt in range(self._max_retries + 1):
             self._throttle()
             try:
-                resp = requests.request(method, url, headers=headers, params=params, timeout=self._timeout)
+                resp = requests.request(
+                    method,
+                    url,
+                    headers=headers,
+                    params=params,
+                    json=json,
+                    data=data,
+                    timeout=self._timeout,
+                )
             except requests.RequestException as exc:
                 if attempt >= self._max_retries:
                     raise

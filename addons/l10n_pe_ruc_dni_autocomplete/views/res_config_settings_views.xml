@@ -25,6 +25,24 @@
                     </div>
                 </div>
             </div>
+            <div class="col-12 col-lg-6 o_setting_box" id="external_api_integration">
+                <div class="o_setting_right_pane">
+                 <span class="o_form_label">Sistema Externo</span>
+                    <div class="content-group">
+                        <div class="text-muted mb8">
+                            Configuración para sincronizar partners con FastAPI.
+                        </div>
+                        <label for="external_api_base_url" string="Base URL"/>
+                        <field name="external_api_base_url" on_change="1"/>
+                        <label for="external_api_token" string="Token"/>
+                        <field name="external_api_token" on_change="1" password="True"/>
+                        <label for="external_api_rps" string="RPS"/>
+                        <field name="external_api_rps" on_change="1"/>
+                        <label for="external_api_max_retries" string="Max retries"/>
+                        <field name="external_api_max_retries" on_change="1"/>
+                    </div>
+                </div>
+            </div>
             </xpath>
         </field>
     </record>
