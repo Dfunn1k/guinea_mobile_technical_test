@@ -42,6 +42,11 @@ services:
       FASTAPI_DATABASE_URL: postgresql+psycopg2://fastapi:fastapi@fastapi_db:5432/fastapi
       FASTAPI_API_TOKEN: change-me
       FASTAPI_LOG_LEVEL: INFO
+      FASTAPI_ODOO_URL: http://odoo:8069
+      FASTAPI_ODOO_DB: odoo
+      FASTAPI_ODOO_USERNAME: admin
+      FASTAPI_ODOO_PASSWORD: admin
+      FASTAPI_ODOO_TIMEOUT: 10.0
     ports:
       - "8000:8000"
     networks:
