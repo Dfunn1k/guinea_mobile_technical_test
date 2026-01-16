@@ -1,0 +1,65 @@
+<?xml version='1.0' encoding='utf-8'?>
+<odoo>
+    
+    <record id="view_partner_form_inherit_l10n_pe_ruc_dni_autocomplete" model="ir.ui.view">
+        <field name="name">res.partner.view.form.inherit.l10n_pe_ruc_dni_autocomplete</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            
+            <xpath expr="//sheet" position="before">
+                <!-- <field name="is_visible_ruc" invisible="1"/> -->
+                <!-- <field name="is_visible_dni" invisible="1"/> -->
+                <field name="sunat_condition" invisible="1"/>
+            </xpath>
+
+            <xpath expr="//field[@name='vat']" position='after'>
+                <button name='action_complete_from_decolecta'
+                        type='object'
+                        string='Autocompletar'
+                        class='oe_highlight'
+                        icon='fa-magic'
+                        help='Consulta a Decolecta y completa datos del contacto.'/>
+            </xpath>
+            
+            <xpath expr="//sheet" position="before">
+                <header>
+                    <field name="sunat_state" widget="statusbar"/>
+                    <field name="sunat_condition" invisible="True"/>
+                    <div class="badge rounded-pill text-bg-success float-right fs-6 border-0">
+                        <i class="fa fa-check" title="Text Success"/> 
+                        <field style="display:inline" name="sunat_condition" />
+                    </div>
+                    <div class="badge rounded-pill text-bg-danger float-right fs-6 border-0">
+                        <i class="fa fa-times" title="Text Danger"/> 
+                        <field style="display:inline" name="sunat_condition" />
+                    </div>
+                </header>
+            </xpath>
+            
+            <xpath expr="//sheet//div[@class='o_address_format']" position="after">
+                <field name="sunat_is_withholding_agent" />
+                <field name="sunat_is_good_taxprayer" />
+            </xpath>
+            
+            <xpath expr="//field[@name='zip']" position="after">
+                <field name="sunat_ubigeo" class="o_address_zip" placeholder="Ubigeo"/>
+            </xpath>
+            
+            <xpath expr="//notebook" position="inside">
+                <page name="additional_info" string="Información adicional">
+                    <group>
+                        <field name="sunat_company_type"/>
+                        <field name="sunat_economy_activity" />
+                        <field name="sunat_workers" />
+                        <field name="sunat_invoicing" />
+                        <field name="sunat_accountant" />
+                        <field name="sunat_foreign_trade"/>
+                        <!-- invisible="not is_visible_ruc" -->
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

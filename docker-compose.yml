@@ -1,0 +1,48 @@
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: odoo
+      POSTGRES_DB: postgres
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - odoo-db-data:/var/lib/postgresql/data
+    networks:
+      - odoo_network
+
+  odoo:
+    image: mintsystem/odoo:19.0
+    depends_on:
+      - db
+    ports:
+      - "8019:8069"
+      - "8072:8072"
+    environment:
+      PGHOST: db
+      PGPORT: 5432
+      PGUSER: odoo
+      PGPASSWORD: odoo
+
+      LIST_DB: "True"
+      ADMIN_PASSWD: "test"
+      PYTHON_INSTALL: |
+        pandas
+        openpyxl
+      LIMIT_TIME_REAL: 3600
+      LIMIT_TIME_CPU: 3600
+      ODOO_ADDONS_PATH: "/mnt/extra-addons, /opt/odoo/addons"
+    volumes:
+      - odoo-web-data:/var/lib/odoo
+      - ./addons:/mnt/extra-addons
+    networks:
+      - odoo_network
+
+volumes:
+  odoo-db-data:
+  odoo-web-data:
+networks:
+  odoo_network:
+    driver: bridge
