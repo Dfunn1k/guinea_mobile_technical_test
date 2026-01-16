@@ -36,6 +36,8 @@ class DecolectaServiceMixin(models.AbstractModel):
 
     def fetch_ruc(self, ruc: str) -> tuple[dict, SunatDTO]:
         payload = self.fetch_ruc_payload(ruc)
+        if not payload or not payload.get('numero_documento'):
+            raise UserError("No se encontró información para el RUC solicitado.")
         return payload, SunatDTO.from_payload(payload)
 
     def fetch_dni_payload(self, dni: str) -> dict:
@@ -52,4 +54,6 @@ class DecolectaServiceMixin(models.AbstractModel):
 
     def fetch_dni(self, dni: str) -> tuple[dict, ReniecDTO]:
         payload = self.fetch_dni_payload(dni)
+        if not payload or not payload.get('document_number'):
+            raise UserError("No se encontró información para el DNI solicitado.")
         return payload, ReniecDTO.from_payload(payload)

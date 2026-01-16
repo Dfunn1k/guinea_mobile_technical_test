@@ -13,6 +13,7 @@ from .services.crud import (
     update_partner,
     upsert_partner,
 )
+from .services.odoo_rpc import sync_partners_to_odoo
 from .services.reconciliation import ConflictError
 
 settings = get_settings()
@@ -122,6 +123,16 @@ async def json_rpc(request: Request, session: Session = Depends(get_db)):
         "result": PartnerRead.from_orm(partner).dict(),
         "id": request_id,
     }
+
+
+@app.post("/sync/odoo", dependencies=[Depends(verify_token)])
+def sync_partners_to_odoo_endpoint(session: Session = Depends(get_db)):
+    try:
+        result = sync_partners_to_odoo(session)
+    except Exception as exc:
+        _logger.exception("Bulk sync to Odoo failed")
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
+    return {"status": "ok", **result}
 
 
 @app.exception_handler(ConflictError)

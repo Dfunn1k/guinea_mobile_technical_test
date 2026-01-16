@@ -106,6 +106,10 @@ class ResPartner(models.Model):
 
         svc = self.env['decolecta.service']
         try:
+            pe_country = self.env.ref('base.pe')
+            if not self.country_id or self.country_id.id != pe_country.id:
+                raise UserError(_('El país debe ser Perú para usar el autocompletado.'))
+
             doc_type_name = (self.l10n_latam_identification_type_id.name or '').upper()
             doc_type = None
             if 'RUC' in doc_type_name:
@@ -130,6 +134,8 @@ class ResPartner(models.Model):
                 document=self.vat,
                 response=payload,
             )
+        except UserError:
+            raise
         except Exception as exc:
             _logger.exception('Error consultando Decolecta')
             raise UserError(_('Error consultando Decolecta: %s') % exc) from exc
