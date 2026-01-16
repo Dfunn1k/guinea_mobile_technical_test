@@ -2,6 +2,7 @@ import logging
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 from ..schemas.sunat_schema import SunatDTO
+from ..schemas.reniec_schema import ReniecDTO
 from ..services.partner_sync import (
     build_external_payload,
     log_event,
@@ -105,8 +106,23 @@ class ResPartner(models.Model):
 
         svc = self.env['decolecta.service']
         try:
-            payload, dto = svc.fetch_ruc(self.vat)
-            self._apply_ruc(dto=dto)
+            doc_type_name = (self.l10n_latam_identification_type_id.name or '').upper()
+            doc_type = None
+            if 'RUC' in doc_type_name:
+                doc_type = 'ruc'
+            elif 'DNI' in doc_type_name:
+                doc_type = 'dni'
+            else:
+                doc_type = self._detect_document_type()
+
+            if doc_type == 'ruc':
+                payload, dto = svc.fetch_ruc(self.vat)
+                self._apply_ruc(dto=dto)
+            elif doc_type == 'dni':
+                payload, dto = svc.fetch_dni(self.vat)
+                self._apply_dni(dto=dto)
+            else:
+                raise UserError(_('No se pudo determinar el tipo de documento.'))
             log_event(
                 _logger,
                 'decolecta_autocomplete',
@@ -150,6 +166,24 @@ class ResPartner(models.Model):
         vals['company_type'] = 'company'
         vals['type'] = 'contact'
         state = None
+
+        self.write(vals)
+
+    def _apply_dni(self, dto: ReniecDTO):
+        self.ensure_one()
+
+        full_name = dto.full_name or ' '.join(filter(None, [
+            dto.first_name,
+            dto.first_last_name,
+            dto.second_last_name,
+        ])).strip()
+
+        vals = {
+            'name': full_name or self.name,
+            'vat': dto.document_number or self.vat,
+            'company_type': 'person',
+            'type': 'contact',
+        }
 
         self.write(vals)
 
