@@ -10,7 +10,7 @@
             <xpath expr="//sheet" position="before">
                 <!-- <field name="is_visible_ruc" invisible="1"/> -->
                 <!-- <field name="is_visible_dni" invisible="1"/> -->
-                <field name="sunat_condition" invisible="1"/>
+                <field name="sunat_state" invisible="1"/>
             </xpath>
 
             <xpath expr="//field[@name='vat']" position='after'>
@@ -30,15 +30,15 @@
             
             <xpath expr="//sheet" position="before">
                 <header>
-                    <field name="sunat_state" widget="statusbar"/>
-                    <field name="sunat_condition" invisible="True"/>
-                    <div class="badge rounded-pill text-bg-success float-right fs-6 border-0">
+                    <field name="sunat_condition" widget="statusbar"/>
+                    <field name="sunat_state" invisible="True"/>
+                    <div class="badge rounded-pill text-bg-success float-right fs-6 border-0" invisible="l10n_latam_identification_type_id != %(l10n_pe.it_RUC)d or sunat_state != 'ACTIVO'">
                         <i class="fa fa-check" title="Text Success"/> 
-                        <field style="display:inline" name="sunat_condition" />
+                        <field name="sunat_state" class="oe_inline" nolabel="1"/>
                     </div>
-                    <div class="badge rounded-pill text-bg-danger float-right fs-6 border-0">
+                    <div class="badge rounded-pill text-bg-danger float-right fs-6 border-0" invisible="l10n_latam_identification_type_id != %(l10n_pe.it_RUC)d or sunat_state == 'ACTIVO'">
                         <i class="fa fa-times" title="Text Danger"/> 
-                        <field style="display:inline" name="sunat_condition" />
+                        <field name="sunat_state" class="oe_inline" nolabel="1"/>
                     </div>
                 </header>
             </xpath>

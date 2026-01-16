@@ -19,8 +19,8 @@ _logger = logging.getLogger(__name__)
 class ResPartner(models.Model):
     _inherit = 'res.partner'
 
-    sunat_state = fields.Selection(string='Estado')
-    sunat_condition = fields.Char(
+    sunat_state = fields.Char(string='Estado')
+    sunat_condition = fields.Selection(
         string='Condición',
         selection=_SUNAT_CONDITION,
     )
