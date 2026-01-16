@@ -8,6 +8,9 @@ class PartnerBase(SQLModel):
     external_id: str = Field(index=True, nullable=False)
     name: Optional[str] = None
     vat: Optional[str] = None
+    identification_type_code: Optional[str] = None
+    company_type: Optional[str] = None
+    contact_type: Optional[str] = None
     email: Optional[str] = None
     phone: Optional[str] = None
     street: Optional[str] = None
@@ -34,6 +37,9 @@ class PartnerRead(PartnerBase):
 class PartnerUpdate(SQLModel):
     name: Optional[str] = None
     vat: Optional[str] = None
+    identification_type_code: Optional[str] = None
+    company_type: Optional[str] = None
+    contact_type: Optional[str] = None
     email: Optional[str] = None
     phone: Optional[str] = None
     street: Optional[str] = None

@@ -73,7 +73,36 @@ def _resolve_country_ids(client: httpx.Client, url: str, db: str, uid: int, pass
     return {record["code"]: record["id"] for record in records or []}
 
 
-def _build_partner_payload(partner: Partner, country_map: dict[str, int]) -> dict[str, Any]:
+def _resolve_identification_type_ids(
+    client: httpx.Client, url: str, db: str, uid: int, password: str, codes: set[str]
+) -> dict[str, int]:
+    if not codes:
+        return {}
+    normalized_codes = {code.strip().upper() for code in codes if code}
+    records = _jsonrpc_call(
+        client,
+        url,
+        "object",
+        "execute_kw",
+        [
+            db,
+            uid,
+            password,
+            "l10n_latam.identification.type",
+            "search_read",
+            [[["code", "in", sorted(normalized_codes)]]],
+            {"fields": ["code", "id"]},
+        ],
+        request_id="identification-types",
+    )
+    return {record["code"].upper(): record["id"] for record in records or []}
+
+
+def _build_partner_payload(
+    partner: Partner,
+    country_map: dict[str, int],
+    identification_type_map: dict[str, int],
+) -> dict[str, Any]:
     values: dict[str, Any] = {
         "external_id": partner.external_id,
         "name": partner.name,
@@ -82,12 +111,18 @@ def _build_partner_payload(partner: Partner, country_map: dict[str, int]) -> dic
         "phone": partner.phone,
         "street": partner.street,
         "city": partner.city,
+        "company_type": partner.company_type,
+        "type": partner.contact_type,
         "external_score": partner.score,
         "external_updated_at": partner.updated_at.isoformat() if partner.updated_at else None,
         "external_last_sync_at": datetime.utcnow().isoformat(),
     }
     if partner.country_code and partner.country_code in country_map:
         values["country_id"] = country_map[partner.country_code]
+    if partner.identification_type_code:
+        identification_code = partner.identification_type_code.strip().upper()
+        if identification_code in identification_type_map:
+            values["l10n_latam_identification_type_id"] = identification_type_map[identification_code]
     return {key: value for key, value in values.items() if value is not None}
 
 
@@ -102,6 +137,10 @@ def sync_partners_to_odoo(session: Session) -> dict[str, int]:
         uid = _authenticate(client, url, settings.odoo_db, settings.odoo_username, settings.odoo_password)
         country_codes = {partner.country_code for partner in partners if partner.country_code}
         country_map = _resolve_country_ids(client, url, settings.odoo_db, uid, settings.odoo_password, country_codes)
+        identification_codes = {partner.identification_type_code for partner in partners if partner.identification_type_code}
+        identification_type_map = _resolve_identification_type_ids(
+            client, url, settings.odoo_db, uid, settings.odoo_password, identification_codes
+        )
 
         external_ids = [partner.external_id for partner in partners]
         existing = _jsonrpc_call(
@@ -125,7 +164,7 @@ def sync_partners_to_odoo(session: Session) -> dict[str, int]:
         created = 0
         updated = 0
         for partner in partners:
-            payload = _build_partner_payload(partner, country_map)
+            payload = _build_partner_payload(partner, country_map, identification_type_map)
             existing_id = existing_map.get(partner.external_id)
             if existing_id:
                 _jsonrpc_call(
