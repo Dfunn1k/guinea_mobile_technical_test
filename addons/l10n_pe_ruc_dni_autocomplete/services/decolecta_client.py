@@ -1,4 +1,5 @@
 import logging
+from pprint import pformat
 from typing import Any
 
 from .http_client import HttpClient
@@ -23,4 +24,6 @@ def fetch_decolecta_payload(
     _logger.info('Consultando Decolecta endpoint=%s params=%s', endpoint, params)
     client = HttpClient(rps=rps, max_retries=max_retries)
     resp = client.request('GET', url, headers=headers, params=params)
-    return resp.json() or {}
+    payload = resp.json() or {}
+    _logger.info('Respuesta Decolecta: %s', pformat(payload))
+    return payload
