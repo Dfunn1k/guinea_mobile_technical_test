@@ -30,7 +30,7 @@
             
             <xpath expr="//sheet" position="before">
                 <header>
-                    <field name="sunat_condition" widget="statusbar"/>
+                    <field name="sunat_condition" widget="statusbar" invisible="l10n_latam_identification_type_id != %(l10n_pe.it_RUC)d"/>
                     <field name="sunat_state" invisible="True"/>
                     <div class="badge rounded-pill text-bg-success float-right fs-6 border-0" invisible="l10n_latam_identification_type_id != %(l10n_pe.it_RUC)d or sunat_state != 'ACTIVO'">
                         <i class="fa fa-check" title="Text Success"/> 
@@ -44,16 +44,16 @@
             </xpath>
             
             <xpath expr="//sheet//div[@class='o_address_format']" position="after">
-                <field name="sunat_is_withholding_agent" />
-                <field name="sunat_is_good_taxprayer" />
+                <field name="sunat_is_withholding_agent" invisible="l10n_latam_identification_type_id != %(l10n_pe.it_RUC)d"/>
+                <field name="sunat_is_good_taxprayer" invisible="l10n_latam_identification_type_id != %(l10n_pe.it_RUC)d"/>
             </xpath>
             
             <xpath expr="//field[@name='zip']" position="after">
-                <field name="sunat_ubigeo" class="o_address_zip" placeholder="Ubigeo"/>
+                <field name="sunat_ubigeo" class="o_address_zip" placeholder="Ubigeo" invisible="l10n_latam_identification_type_id != %(l10n_pe.it_RUC)d" />
             </xpath>
             
             <xpath expr="//notebook" position="inside">
-                <page name="additional_info" string="Información adicional">
+                <page name="additional_info" string="Información adicional" invisible="l10n_latam_identification_type_id != %(l10n_pe.it_RUC)d">
                     <group>
                         <field name="sunat_company_type"/>
                         <field name="sunat_economy_activity" />
