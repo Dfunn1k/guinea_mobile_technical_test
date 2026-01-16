@@ -8,7 +8,7 @@ from ..services.partner_sync import (
     reconcile_partner_payload,
 )
 
-_SUNAT_STATE = [
+_SUNAT_CONDITION = [
     ('HABIDO', 'HABIDO'),
     ('NO HABIDO', 'NO HABIDO')
 ]
@@ -18,12 +18,11 @@ _logger = logging.getLogger(__name__)
 class ResPartner(models.Model):
     _inherit = 'res.partner'
 
-    sunat_state = fields.Selection(
-        string='Estado',
-        selection=_SUNAT_STATE,
-        index='btree',
+    sunat_state = fields.Selection(string='Estado')
+    sunat_condition = fields.Char(
+        string='Condición',
+        selection=_SUNAT_CONDITION,
     )
-    sunat_condition = fields.Char(string='Condición')
     sunat_ubigeo = fields.Char(string='Ubigeo')
     sunat_is_withholding_agent = fields.Boolean(
         string='¿Agente de retención?',
@@ -143,7 +142,7 @@ class ResPartner(models.Model):
         pe_country = self.env.ref('base.pe')
         state = self._find_department(dto.departamento, pe_country)
         city = self._find_city(dto.provincia, state, pe_country)
-        district = self._find_district(dto.distrito, city.id)
+        district = self._find_district(dto.distrito, city)
 
         vals['state_id'] = state.id
         vals['city_id'] = city.id
