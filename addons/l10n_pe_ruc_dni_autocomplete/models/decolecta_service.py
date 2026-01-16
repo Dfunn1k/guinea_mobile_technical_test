@@ -4,7 +4,7 @@ from odoo import models
 from odoo.exceptions import UserError
 from ..schemas.sunat_schema import SunatDTO
 from ..schemas.reniec_schema import ReniecDTO
-from ..services.http_client import HttpClient
+from ..services.decolecta_client import fetch_decolecta_payload
 
 _logger = logging.getLogger(__name__)
 
@@ -26,15 +26,12 @@ class DecolectaServiceMixin(models.AbstractModel):
         cfg = self._config()
         if not cfg['token']:
             raise UserError("No hay un token configurado para la integración con Decolecta.")
-        url = '%s/sunat/ruc/full' % cfg['base_url']
-        headers = {
-            'Authorization': 'Bearer %s' % cfg['token'],
-            'Accept': 'application/json',
-        }
-        _logger.info('Consultando Decolecta RUC=%s', ruc)
-        client = HttpClient(rps=3, max_retries=5)
-        resp = client.request('GET', url, headers=headers, params={'numero': ruc})
-        payload = resp.json() or {}
+        payload = fetch_decolecta_payload(
+            base_url=cfg['base_url'],
+            token=cfg['token'],
+            endpoint='sunat/ruc/full',
+            params={'numero': ruc},
+        )
         return payload
 
     def fetch_ruc(self, ruc: str) -> tuple[dict, SunatDTO]:
@@ -45,15 +42,12 @@ class DecolectaServiceMixin(models.AbstractModel):
         cfg = self._config()
         if not cfg['token']:
             raise UserError("No hay un token configurado para la integración con Decolecta.")
-        url = '%s/reniec/dni' % cfg['base_url']
-        headers = {
-            'Authorization': 'Bearer %s' % cfg['token'],
-            'Accept': 'application/json',
-        }
-        _logger.info('Consultando Decolecta DNI=%s', dni)
-        client = HttpClient(rps=3, max_retries=5)
-        resp = client.request('GET', url, headers=headers, params={'numero': dni})
-        payload = resp.json() or {}
+        payload = fetch_decolecta_payload(
+            base_url=cfg['base_url'],
+            token=cfg['token'],
+            endpoint='reniec/dni',
+            params={'numero': dni},
+        )
         return payload
 
     def fetch_dni(self, dni: str) -> tuple[dict, ReniecDTO]:

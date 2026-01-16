@@ -1,10 +1,19 @@
+import logging
 from odoo import _, api, fields, models
+from odoo.exceptions import UserError
 from ..schemas.sunat_schema import SunatDTO
+from ..services.partner_sync import (
+    build_external_payload,
+    log_event,
+    reconcile_partner_payload,
+)
 
 _SUNAT_STATE = [
     ('HABIDO', 'HABIDO'),
     ('NO HABIDO', 'NO HABIDO')
 ]
+
+_logger = logging.getLogger(__name__)
 
 class ResPartner(models.Model):
     _inherit = 'res.partner'
@@ -42,6 +51,20 @@ class ResPartner(models.Model):
         compute='_compute_visible_documents',
         store=True
     )
+    external_id = fields.Char(
+        string='External ID',
+        index=True
+    )
+    external_score = fields.Float(
+        string='External Score',
+        default=0.0
+    )
+    external_last_sync_at = fields.Datetime(
+        string='Última sincronización externa'
+    )
+    external_updated_at = fields.Datetime(
+        string='Actualización externa'
+    )
 
     @api.depends('country_id', 'l10n_latam_identification_type_id')
     def _compute_visible_documents(self):
@@ -53,7 +76,7 @@ class ResPartner(models.Model):
                 rec.is_visible_ruc = False
                 rec.is_visible_dni = False
 
-            if rec.l10n_latam_identification_type_id.id.id == dni.id:
+            if rec.l10n_latam_identification_type_id.id == dni.id:
                 rec.is_visible_dni = True
                 rec.is_visible_ruc = False
             elif rec.l10n_latam_identification_type_id.id == ruc.id:
@@ -85,8 +108,16 @@ class ResPartner(models.Model):
         try:
             payload, dto = svc.fetch_ruc(self.vat)
             self._apply_ruc(dto=dto)
-        except:
-            pass
+            log_event(
+                _logger,
+                'decolecta_autocomplete',
+                partner_id=self.id,
+                document=self.vat,
+                response=payload,
+            )
+        except Exception as exc:
+            _logger.exception('Error consultando Decolecta')
+            raise UserError(_('Error consultando Decolecta: %s') % exc) from exc
 
     def _apply_ruc(self, dto: SunatDTO):
         self.ensure_one()
@@ -100,7 +131,7 @@ class ResPartner(models.Model):
             'street': dto.direccion,
             'sunat_ubigeo': dto.ubigeo,
             'sunat_is_withholding_agent': dto.es_agente_retencion,
-            'sunat_is_good_taxpayer': dto.es_buen_contribuyente,
+            'sunat_is_good_taxprayer': dto.es_buen_contribuyente,
             'sunat_company_type': dto.tipo,
             'sunat_economy_activity': dto.actividad_economica,
             'sunat_workers': dto.numero_trabajadores,
@@ -132,7 +163,7 @@ class ResPartner(models.Model):
     def _find_city(self, city_name, state_id, country_id):
         return self.env['res.city'].search([
             ('country_id', '=', country_id.id),
-            ('state_id', '=', state_id.id)
+            ('state_id', '=', state_id.id),
             ('name', '=ilike', city_name)
         ], limit=1)
 
@@ -143,3 +174,38 @@ class ResPartner(models.Model):
             ('country_id', '=', country_id.id),
             ('name', '=ilike', department_name)
         ], limit=1)
+
+    def action_sync_to_external(self):
+        self.ensure_one()
+        payload = build_external_payload(self)
+        log_event(
+            _logger,
+            'external_sync_start',
+            direction='odoo_to_external',
+            partner_id=self.id,
+            external_id=payload.get('external_id'),
+        )
+        result = self.env['external.sync.service'].sync_partner(payload)
+        self._apply_external_sync_result(result)
+
+    def _apply_external_sync_result(self, result):
+        if not result:
+            return
+        values = reconcile_partner_payload(result)
+        if values:
+            self.write(values)
+        log_event(
+            _logger,
+            'external_sync_success',
+            direction='odoo_to_external',
+            partner_id=self.id,
+            external_id=self.external_id,
+            response=result,
+        )
+
+    def _cron_sync_external_score(self):
+        partners = self.search([('external_id', '!=', False)])
+        for partner in partners:
+            payload = build_external_payload(partner)
+            result = self.env['external.sync.service'].sync_partner(payload)
+            partner._apply_external_sync_result(result)

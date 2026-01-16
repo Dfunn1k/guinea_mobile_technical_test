@@ -20,6 +20,12 @@
                         class='oe_highlight'
                         icon='fa-magic'
                         help='Consulta a Decolecta y completa datos del contacto.'/>
+                <button name='action_sync_to_external'
+                        type='object'
+                        string='Sincronizar externo'
+                        class='oe_highlight'
+                        icon='fa-refresh'
+                        help='Sincroniza este contacto con el sistema externo.'/>
             </xpath>
             
             <xpath expr="//sheet" position="before">
@@ -56,6 +62,14 @@
                         <field name="sunat_accountant" />
                         <field name="sunat_foreign_trade"/>
                         <!-- invisible="not is_visible_ruc" -->
+                    </group>
+                </page>
+                <page name="external_sync" string="Integración externa">
+                    <group>
+                        <field name="external_id"/>
+                        <field name="external_score"/>
+                        <field name="external_updated_at"/>
+                        <field name="external_last_sync_at"/>
                     </group>
                 </page>
             </xpath>
